@@ -3,6 +3,8 @@ import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import org.example.interpreter.MyCustomVisitor;
+
 import java.util.List;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue"})
@@ -167,6 +169,11 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public OutExprContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitOutExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class VarDeclContext extends StmtContext {
@@ -176,6 +183,11 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public VarDeclContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitVarDecl(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final StmtContext stmt() throws RecognitionException {
@@ -257,6 +269,11 @@ public class TestLangParser extends Parser {
 	public static class IdentifierContext extends ExprContext {
 		public TerminalNode ID() { return getToken(TestLangParser.ID, 0); }
 		public IdentifierContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitIdentifier(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class MulDivExprContext extends ExprContext {
@@ -318,6 +335,12 @@ public class TestLangParser extends Parser {
 	public static class NumberLiteralContext extends ExprContext {
 		public TerminalNode NUMBER() { return getToken(TestLangParser.NUMBER, 0); }
 		public NumberLiteralContext(ExprContext ctx) { copyFrom(ctx); }
+
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitNumberLiteral(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ExprContext expr() throws RecognitionException {

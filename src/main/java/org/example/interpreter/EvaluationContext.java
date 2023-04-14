@@ -39,4 +39,8 @@ public class EvaluationContext {
 
         return null;
     }
+
+    public boolean isVariableDeclared(String name) {
+        return variableScope.stream().anyMatch(scope -> scope.containsKey(name));
+    }
 }

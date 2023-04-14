@@ -1,6 +1,5 @@
 package org.example.interpreter;
 
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.example.testLang.TestLangBaseVisitor;
 import org.example.testLang.TestLangParser;
 
@@ -16,15 +15,6 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
 
     }
 
-    @Override
-    public Object visitTerminal(TerminalNode node) {
-        if (node.getSymbol().getType() == TestLangParser.VAR) {
-            return visitVarDecl((TestLangParser.VarDeclContext) node.getParent());
-        } else if (node.getSymbol().getType() == TestLangParser.NUMBER) {
-            return visitNumberLiteral((TestLangParser.NumberLiteralContext)node.getParent());
-        }
-        return super.visitTerminal(node);
-    }
     @Override
     public Object visitProgram(TestLangParser.ProgramContext ctx) {
 
@@ -50,6 +40,25 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         } else {
             return Integer.parseInt(numberText);
         }
+    }
+
+    @Override
+    public Object visitIdentifier(TestLangParser.IdentifierContext ctx) {
+        String variableName = ctx.ID().getText();
+
+        if (!context.isVariableDeclared(variableName)) {
+            //TODO change this part and handle the error ""Variable '" + variableName + "' is not declared."
+            return null;
+        }
+
+        return context.getVariable(variableName);
+    }
+
+    @Override
+    public Object visitOutExpr(TestLangParser.OutExprContext ctx) {
+        Object value = visit(ctx.expr());
+        System.out.println(value);
+        return value;
     }
 
 }
