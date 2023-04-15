@@ -5,6 +5,8 @@ import org.example.testLang.TestLangParser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     private final EvaluationContext context;
@@ -23,6 +25,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
 
         return visitChildren(ctx);
     }
+
     @Override
     public Object visitVarDecl(TestLangParser.VarDeclContext ctx) {
         String variableName = ctx.ID().getText();
@@ -80,7 +83,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number) || !(right instanceof Number)) {
-          //ToDo Operands must be numbers for multiplication and division;
+            //ToDo Operands must be numbers for multiplication and division;
         }
 
         Number leftNum = (Number) left;
@@ -160,5 +163,44 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         return range;
     }
 
+    /**
+     * Evaluates a map expression, applying a given lambda function to each element in a sequence.
+     *
+     * <p>The method first evaluates the range expression, ensuring it is a valid sequence.
+     * Then, it enters a new scope for the lambda function and creates a lambda function that maps
+     * each element in the sequence. The lambda function uses the provided variable name to store
+     * the input value for each element in the sequence.
+     *
+     * <p>After mapping the sequence, the method exits the lambda function scope and returns the
+     * mapped sequence.
+     *
+     * @param ctx The MapExpressionContext object provided by the ANTLR parser.
+     * @return The mapped sequence after applying the lambda function to each element in the sequence.
+     */
+    @Override
+    public Object visitMapExpression(TestLangParser.MapExpressionContext ctx) {
+        Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
+
+        if (!(range instanceof List)) {
+           //TODO "Map function expects a sequence as the first argument.";
+        }
+
+        List<Object> sequence = (List<Object>) range;
+
+        context.enterScope();
+
+        String lambdaVarName = ctx.mapExpr().ID().getText();
+
+        Function<Object, Object> lambdaFunction = (input) -> {
+            context.setVariable(lambdaVarName, input);
+            return visit(ctx.mapExpr().expr(1));
+        };
+
+        List<Object> mappedSequence = sequence.stream().map(lambdaFunction).collect(Collectors.toList());
+
+        context.exitScope();
+
+        return mappedSequence;
+    }
 
 }

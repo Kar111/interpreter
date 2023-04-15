@@ -15,11 +15,11 @@ public class TestLangParser extends Parser {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
-		T__9=10, T__10=11, VAR=12, OUT=13, PRINT=14, MAP=15, REDUCE=16, ARROW=17, 
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9,
+		T__9=10, T__10=11, VAR=12, OUT=13, PRINT=14, MAP=15, REDUCE=16, ARROW=17,
 		ID=18, NUMBER=19, STRING=20, WS=21;
 	public static final int
-		RULE_program = 0, RULE_stmt = 1, RULE_expr = 2, RULE_mapExpr = 3, RULE_reduceExpr = 4, 
+		RULE_program = 0, RULE_stmt = 1, RULE_expr = 2, RULE_mapExpr = 3, RULE_reduceExpr = 4,
 		RULE_op = 5;
 	private static String[] makeRuleNames() {
 		return new String[] {
@@ -30,15 +30,15 @@ public class TestLangParser extends Parser {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "'='", "'+'", "'-'", "'*'", "'/'", "'^'", "'('", "')'", "'{'", 
+			null, "'='", "'+'", "'-'", "'*'", "'/'", "'^'", "'('", "')'", "'{'",
 			"','", "'}'", "'var'", "'out'", "'print'", "'map'", "'reduce'", "'->'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			"VAR", "OUT", "PRINT", "MAP", "REDUCE", "ARROW", "ID", "NUMBER", "STRING", 
+			null, null, null, null, null, null, null, null, null, null, null, null,
+			"VAR", "OUT", "PRINT", "MAP", "REDUCE", "ARROW", "ID", "NUMBER", "STRING",
 			"WS"
 		};
 	}
@@ -150,7 +150,7 @@ public class TestLangParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_stmt; }
-	 
+
 		public StmtContext() { }
 		public void copyFrom(StmtContext ctx) {
 			super.copyFrom(ctx);
@@ -257,7 +257,7 @@ public class TestLangParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expr; }
-	 
+
 		public ExprContext() { }
 		public void copyFrom(ExprContext ctx) {
 			super.copyFrom(ctx);
@@ -269,6 +269,12 @@ public class TestLangParser extends Parser {
 			return getRuleContext(MapExprContext.class,0);
 		}
 		public MapExpressionContext(ExprContext ctx) { copyFrom(ctx); }
+
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitMapExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class IdentifierContext extends ExprContext {
@@ -528,7 +534,7 @@ public class TestLangParser extends Parser {
 						}
 						break;
 					}
-					} 
+					}
 				}
 				setState(60);
 				_errHandler.sync(this);

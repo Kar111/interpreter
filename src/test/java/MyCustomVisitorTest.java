@@ -29,15 +29,15 @@ public class MyCustomVisitorTest {
 
     @Test
     public void visitVarDecl() {
-            //SETUP
+        //SETUP
         String input = "var myVar = 11";
         MyCustomVisitor visitor = prepareTest(input);
 
-            //EXECUTE
+        //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
-            //ASSERT
+        //ASSERT
         assertEquals(11, value);
 
     }
@@ -98,7 +98,21 @@ public class MyCustomVisitorTest {
         Object value = context.getVariable("myVar");
 
         //ASSERT
-        assertEquals( Math.pow(2, 4), value);
+        assertEquals(Math.pow(2, 4), value);
+
+    }
+    @Test
+    public void visitMapExpression() {
+        //SETUP
+        String input = "var seq = map({0, 2}, i -> i * 2)";
+        MyCustomVisitor visitor = prepareTest(input);
+
+        //EXECUTE
+        EvaluationContext context = visitor.getEvaluationContext();
+        Object value = context.getVariable("seq");
+
+        //ASSERT
+        assertEquals(Arrays.asList(0.0, 2.0, 4.0), value);
 
     }
 
@@ -151,6 +165,7 @@ public class MyCustomVisitorTest {
         //ASSERT
         assertEquals("11", output.trim());
     }
+
     @Test
     public void visitPrintString() {
 
