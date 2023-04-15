@@ -161,6 +161,11 @@ public class TestLangParser extends Parser {
 		public TerminalNode PRINT() { return getToken(TestLangParser.PRINT, 0); }
 		public TerminalNode STRING() { return getToken(TestLangParser.STRING, 0); }
 		public PrintStringContext(StmtContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitPrintString(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class OutExprContext extends StmtContext {
@@ -285,6 +290,11 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public MulDivExprContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitMulDivExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class ReduceExpressionContext extends ExprContext {
@@ -302,6 +312,11 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public PowExprContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitPowExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class ParenExprContext extends ExprContext {
@@ -309,6 +324,11 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public ParenExprContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitParenExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class RangeExprContext extends ExprContext {
@@ -319,17 +339,26 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public RangeExprContext(ExprContext ctx) { copyFrom(ctx); }
+
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitRangeExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class AddSubExprContext extends ExprContext {
 		public Token addSubOp;
-		public List<ExprContext> expr() {
-			return getRuleContexts(ExprContext.class);
-		}
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public AddSubExprContext(ExprContext ctx) { copyFrom(ctx); }
+
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitAddSubExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class NumberLiteralContext extends ExprContext {
