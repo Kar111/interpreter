@@ -308,6 +308,12 @@ public class TestLangParser extends Parser {
 			return getRuleContext(ReduceExprContext.class,0);
 		}
 		public ReduceExpressionContext(ExprContext ctx) { copyFrom(ctx); }
+
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MyCustomVisitor) return (T) ((MyCustomVisitor)visitor).visitReduceExpression(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class PowExprContext extends ExprContext {

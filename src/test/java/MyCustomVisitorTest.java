@@ -117,6 +117,21 @@ public class MyCustomVisitorTest {
     }
 
     @Test
+    public void visitReduceExpression() {
+        //SETUP
+        String input = "var seq = map({0, 2}, i -> i * 2)";
+        MyCustomVisitor visitor = prepareTest(input);
+
+        //EXECUTE
+        EvaluationContext context = visitor.getEvaluationContext();
+        Object value = context.getVariable("seq");
+
+        //ASSERT
+        assertEquals(Arrays.asList(0.0, 2.0, 4.0), value);
+
+    }
+
+    @Test
     public void visitRangeExpr() {
         //SETUP
         String input = "var range = {1,4}";

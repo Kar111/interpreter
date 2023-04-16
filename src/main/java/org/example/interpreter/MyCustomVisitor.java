@@ -5,6 +5,7 @@ import org.example.testLang.TestLangParser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -202,5 +203,55 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
 
         return mappedSequence;
     }
+
+    /**
+     * Visits a 'reduce' expression in the language, which applies a binary lambda function to elements
+     * of a sequence, accumulating the result of the function application.
+     *
+     * <p>The 'reduce' expression has the following structure:
+     * REDUCE '(' expr ',' expr ',' ID ID ARROW expr ')'
+     * - The first expr represents the input sequence.
+     * - The second expr represents the initial value.
+     * - ID ID ARROW expr represents the lambda function that takes two arguments and returns a single value.
+     *
+     * <p>Example usage in the language:
+     * reduce({1,4}, 0, a b -> a + b)
+     *
+     * @param ctx The ReduceExpressionContext object representing the 'reduce' expression in the parse tree.
+     * @return The result of the 'reduce' operation after applying the lambda function on the input sequence.
+     */
+    @Override
+    public Object visitReduceExpression(TestLangParser.ReduceExpressionContext ctx) {
+        Object range = visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
+
+        if (!(range instanceof List)) {
+            //TODO "Reduce function expects a sequence as the first argument.";
+        }
+
+        List<Object> sequence = (List<Object>) range;
+
+        // Get the initial value
+        Object initialValue = visit(ctx.reduceExpr().expr(1));
+
+        // Create a new scope for the lambda function
+        context.enterScope();
+
+        String lambdaVarName1 = ctx.reduceExpr().ID(0).getText();
+        String lambdaVarName2 = ctx.reduceExpr().ID(1).getText();
+
+        BinaryOperator<Object> lambdaFunction = (input1, input2) -> {
+            context.setVariable(lambdaVarName1, input1);
+            context.setVariable(lambdaVarName2, input2);
+            return visit(ctx.reduceExpr().expr(2));
+        };
+
+        Object reducedValue = sequence.stream().reduce(initialValue, lambdaFunction);
+
+        // Exit the lambda function scope
+        context.exitScope();
+
+        return reducedValue;
+    }
+
 
 }
