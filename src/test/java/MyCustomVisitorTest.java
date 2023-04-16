@@ -3,16 +3,21 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.example.interpreter.EvaluationContext;
+import org.example.interpreter.MyCustomVisitor;
 import org.example.testLang.TestLangLexer;
 import org.example.testLang.TestLangParser;
-import org.example.interpreter.MyCustomVisitor;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
 
 public class MyCustomVisitorTest {
 
@@ -215,6 +220,66 @@ public class MyCustomVisitorTest {
 
         //ASSERT
         assertEquals("hello world", output.trim());
+    }
+
+    @Test
+    public void testTheCodeForGivenExample() {
+
+        //SETUP
+        String input = "var n = 3\n" +
+                "var v1 = 4 * reduce({0, n}, 0, x y -> x + y)\n" +
+                "print \"v1 = \"\n" +
+                "out v1";
+        CharStream charStream = CharStreams.fromString(input);
+        TestLangLexer lexer = new TestLangLexer(charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        TestLangParser parser = new TestLangParser(tokens);
+        ParseTree tree = parser.program();
+        MyCustomVisitor visitor = new MyCustomVisitor();
+
+        //EXECUTE
+
+        // Save the original System.out
+        PrintStream originalOut = System.out;
+        // Create a custom output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream customOut = new PrintStream(outputStream);
+
+        // Set System.out to the custom output stream
+        System.setOut(customOut);
+
+        // Execute the visitor on the parse tree
+        visitor.visit(tree);
+
+        // Reset System.out to the original output stream
+        System.setOut(originalOut);
+
+        // Get the output as a string
+        String output = outputStream.toString();
+
+        //ASSERT
+        assertEquals("v1 = 24.0", output.trim());
+    }
+
+    @ParameterizedTest
+    @MethodSource("arithmeticalExpressions")
+    void testArithmeticalExpression(String input, double expectedValue) {
+        MyCustomVisitor visitor = prepareTest(input);
+
+        //EXECUTE
+        EvaluationContext context = visitor.getEvaluationContext();
+        Object value = context.getVariable("myVar");
+
+        //ASSERT
+        assertEquals(expectedValue, value);
+    }
+
+    static Stream<Arguments> arithmeticalExpressions() {
+        return Stream.of(
+                Arguments.of("var myVar = 3 + 4 * 2.0 - 6 / 2", 3 + 4 * 2.0 - 6 / 2),
+                Arguments.of("var myVar = 3 + 4 * 2 - 6.0 / (2 ^ 2)", 3 + 4 * 2 - 6.0 / Math.pow(2, 2)),
+                Arguments.of("var myVar = (3 + 4) * 2 - 6.0 / (2 ^ 2)", (3 + 4) * 2 - 6.0 / Math.pow(2, 2))
+        );
     }
 
 }

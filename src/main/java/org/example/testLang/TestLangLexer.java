@@ -1,9 +1,12 @@
 package org.example.testLang;// Generated from TestLang.g4 by ANTLR 4.12.0
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue"})
 public class TestLangLexer extends Lexer {
@@ -35,7 +38,7 @@ public class TestLangLexer extends Lexer {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "'='", "'+'", "'-'", "'*'", "'/'", "'^'", "'('", "')'", "'{'", 
+			null, "'='", "'('", "')'", "'^'", "'*'", "'/'", "'+'", "'-'", "'{'", 
 			"','", "'}'", "'var'", "'out'", "'print'", "'map'", "'reduce'", "'->'"
 		};
 	}
@@ -150,11 +153,11 @@ public class TestLangLexer extends Lexer {
 		"\u0000\u0000\u001dO\u0001\u0000\u0000\u0000\u001fS\u0001\u0000\u0000\u0000"+
 		"!Z\u0001\u0000\u0000\u0000#]\u0001\u0000\u0000\u0000%e\u0001\u0000\u0000"+
 		"\u0000\'t\u0001\u0000\u0000\u0000)~\u0001\u0000\u0000\u0000+,\u0005=\u0000"+
-		"\u0000,\u0002\u0001\u0000\u0000\u0000-.\u0005+\u0000\u0000.\u0004\u0001"+
-		"\u0000\u0000\u0000/0\u0005-\u0000\u00000\u0006\u0001\u0000\u0000\u0000"+
-		"12\u0005*\u0000\u00002\b\u0001\u0000\u0000\u000034\u0005/\u0000\u0000"+
-		"4\n\u0001\u0000\u0000\u000056\u0005^\u0000\u00006\f\u0001\u0000\u0000"+
-		"\u000078\u0005(\u0000\u00008\u000e\u0001\u0000\u0000\u00009:\u0005)\u0000"+
+		"\u0000,\u0002\u0001\u0000\u0000\u0000-.\u0005(\u0000\u0000.\u0004\u0001"+
+		"\u0000\u0000\u0000/0\u0005)\u0000\u00000\u0006\u0001\u0000\u0000\u0000"+
+		"12\u0005^\u0000\u00002\b\u0001\u0000\u0000\u000034\u0005*\u0000\u0000"+
+		"4\n\u0001\u0000\u0000\u000056\u0005/\u0000\u00006\f\u0001\u0000\u0000"+
+		"\u000078\u0005+\u0000\u00008\u000e\u0001\u0000\u0000\u00009:\u0005-\u0000"+
 		"\u0000:\u0010\u0001\u0000\u0000\u0000;<\u0005{\u0000\u0000<\u0012\u0001"+
 		"\u0000\u0000\u0000=>\u0005,\u0000\u0000>\u0014\u0001\u0000\u0000\u0000"+
 		"?@\u0005}\u0000\u0000@\u0016\u0001\u0000\u0000\u0000AB\u0005v\u0000\u0000"+

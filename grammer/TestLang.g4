@@ -8,10 +8,10 @@ stmt: VAR ID '=' expr                # VarDecl
     ;
 
 
-expr: expr addSubOp=('+' | '-') expr       # AddSubExpr
-    | expr mulDivOp=('*' | '/') expr       # MulDivExpr
+expr: '(' expr ')'                         # ParenExpr
     | expr '^' expr                        # PowExpr
-    | '(' expr ')'                         # ParenExpr
+    | expr mulDivOp=('*' | '/') expr       # MulDivExpr
+    | expr addSubOp=('+' | '-') expr       # AddSubExpr
     | ID                                   # Identifier
     | '{' expr ',' expr '}'                # RangeExpr
     | NUMBER                               # NumberLiteral
