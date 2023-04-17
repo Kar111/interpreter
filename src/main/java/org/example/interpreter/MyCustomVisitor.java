@@ -1,6 +1,5 @@
 package org.example.interpreter;
 
-import org.antlr.v4.runtime.tree.ErrorNode;
 import org.example.testLang.TestLangBaseVisitor;
 import org.example.testLang.TestLangParser;
 
@@ -58,7 +57,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         String variableName = ctx.ID().getText();
 
         if (!context.isVariableDeclared(variableName)) {
-            //TODO change this part and handle the error ""Variable '" + variableName + "' is not declared."
+            System.out.println("Variable '" + variableName + "' is not declared.");
             return null;
         }
 
@@ -87,7 +86,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number) || !(right instanceof Number)) {
-            //ToDo Operands must be numbers for multiplication and division;
+            System.out.println("Operands must be numbers for multiplication and division");
         }
 
         Number leftNum = (Number) left;
@@ -97,7 +96,8 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
             return leftNum.doubleValue() * rightNum.doubleValue();
         } else {
             if (rightNum.doubleValue() == 0) {
-                //TODO "Division by zero is not allowed";
+                System.out.println("Division by zero is not allowed");
+                return null;
             }
             return leftNum.doubleValue() / rightNum.doubleValue();
         }
@@ -110,7 +110,8 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object exponent = visit(ctx.expr(1));
 
         if (!(base instanceof Number) || !(exponent instanceof Number)) {
-            //TODO "Operands must be numbers for exponentiation");
+            System.out.println("Operands must be numbers for exponentiation");
+            return null;
         }
 
         Number baseNum = (Number) base;
@@ -130,7 +131,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number) || !(right instanceof Number)) {
-            //TODO "Invalid operands for addition or subtraction.";
+            System.out.println("Invalid operands for addition or subtraction, operands should be numbers");
         }
 
         Number leftNumber = (Number) left;

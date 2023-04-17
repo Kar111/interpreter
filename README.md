@@ -19,7 +19,8 @@ TestLang supports the following features:
 
 **Building the Project**
 
-**Running the Interpreter**
+In order to run it from InteliJIDEA
+- Run main function inside org.example/Main
 
 **Example TestLang Code**
 Here's an example of TestLang code that calculates an approximation of pi:
