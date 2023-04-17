@@ -1,0 +1,39 @@
+.styled-text-area {
+    -fx-padding: 10;
+}
+
+.keyword-var {
+    -fx-fill: blue;
+    -fx-font-weight: bold;
+}
+.keyword-func {
+    -fx-fill: darkorange;
+    -fx-font-weight: bold;
+}
+.keyword-command {
+    -fx-fill: darkgreen;
+    -fx-font-weight: bold;
+}
+.quoted-text {
+    -fx-fill: darkred;
+    -fx-font-weight: bold;
+}
+.success-text {
+    -fx-fill: black;
+}
+
+.error-text {
+    -fx-fill: red;
+}
+
+.line-numbers {
+    -fx-padding: 0 10 0 0;
+}
+
+*.label {
+    -fx-background-color: white;
+}
+
+#logTextArea {
+    -fx-background-color: lightgray;
+}
