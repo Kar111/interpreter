@@ -1,5 +1,6 @@
 package org.example.interpreter;
 
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.example.testLang.TestLangBaseVisitor;
 import org.example.testLang.TestLangParser;
 
@@ -30,9 +31,12 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitVarDecl(TestLangParser.VarDeclContext ctx) {
         String variableName = ctx.ID().getText();
-        Object value = visit(ctx.expr());
 
-        // TODO Check if the variable name is already declared in the current scope
+        if(variableName == "missing ID") {
+            System.out.println("Missing variable ID");
+            return null;
+        }
+        Object value = visit(ctx.expr());
 
         context.setVariable(variableName, value);
         return value;
@@ -64,7 +68,6 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitOutExpr(TestLangParser.OutExprContext ctx) {
         Object value = visit(ctx.expr());
-        //TODO just return this
         System.out.println(value);
         return value;
     }
@@ -146,14 +149,15 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Integer) || !(right instanceof Integer)) {
-            //TODO "Only integers are allowed in range expressions.";
+            System.out.println("Only integers are allowed in range expressions.");
+            return null;
         }
 
         Integer leftNumber = (Integer) left;
         Integer rightNumber = (Integer) right;
 
         if (rightNumber < leftNumber) {
-            //TODO "Right number must not be less than left number in a range expression.";
+            System.out.println("Right number must not be less than left number in a range expression.");
         }
 
         List<Integer> range = new ArrayList<>();
@@ -180,11 +184,11 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
      */
     @Override
     public Object visitMapExpression(TestLangParser.MapExpressionContext ctx) {
-        Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
-
-        if (!(range instanceof List)) {
-           //TODO "Map function expects a sequence as the first argument.";
+        if (!(ctx.mapExpr().expr(0) instanceof TestLangParser.RangeExprContext)) {
+            System.out.println(("First argument must be a range expression: {expr1, expr2}"));
+            return null;
         }
+        Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
 
         List<Object> sequence = (List<Object>) range;
 
@@ -225,7 +229,8 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object range = visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
 
         if (!(range instanceof List)) {
-            //TODO "Reduce function expects a sequence as the first argument.";
+            System.out.println("Reduce function expects a sequence as the first argument.");
+            return null;
         }
 
         List<Object> sequence = (List<Object>) range;
@@ -252,6 +257,5 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
 
         return reducedValue;
     }
-
 
 }

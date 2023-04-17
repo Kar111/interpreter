@@ -226,10 +226,11 @@ public class MyCustomVisitorTest {
     public void testTheCodeForGivenExample() {
 
         //SETUP
-        String input = "var n = 3\n" +
-                "var v1 = 4 * reduce({0, n}, 0, x y -> x + y)\n" +
-                "print \"v1 = \"\n" +
-                "out v1";
+        String input = "var n = 500\n" +
+                "var sequence = map({0, n}, i -> (-1)^i / (2.0 * i + 1))\n" +
+                "var pi = 4 * reduce(sequence, 0, x y -> x + y)\n" +
+                "print \"pi = \"\n" +
+                "out pi";
         CharStream charStream = CharStreams.fromString(input);
         TestLangLexer lexer = new TestLangLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -258,7 +259,7 @@ public class MyCustomVisitorTest {
         String output = outputStream.toString();
 
         //ASSERT
-        assertEquals("v1 = 24.0", output.trim());
+        assertEquals("pi = 3.143588659585789", output.trim());
     }
 
     @ParameterizedTest

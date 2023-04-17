@@ -31,11 +31,10 @@ public class EvaluationContext {
 
     public Object getVariable(String name) {
 
-        for (Map<String, Object> scope : variableScope) {
+        Map<String, Object> scope = variableScope.peek();
             if (scope.containsKey(name)) {
                 return scope.get(name);
             }
-        }
 
         return null;
     }
