@@ -9,7 +9,7 @@ import org.fxmisc.richtext.StyleClassedTextArea;
 public class EditorSplitPane {
     public static SplitPane createSplitPane(
             VBox root,
-            VirtualizedScrollPane<StyleClassedTextArea>  editorScrollPan,
+            VirtualizedScrollPane<StyleClassedTextArea> editorScrollPan,
             VirtualizedScrollPane<StyleClassedTextArea> logScrollPan,
             double dividerPosition) {
         SplitPane splitPane = new SplitPane();

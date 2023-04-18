@@ -36,7 +36,7 @@ public class EditorApplication extends Application {
     private static final String SCENE_TITLE = "Interpreter";
 
     private static final Pattern KEYWORD_PATTERN = Pattern.compile(
-            "\\b(" + String.join("|", KEYWORD_STYLES.keySet())  + ")\\b" + "|(\"[^\"]+\")"
+            "\\b(" + String.join("|", KEYWORD_STYLES.keySet()) + ")\\b" + "|(\"[^\"]+\")"
     );
 
     @Override
@@ -82,7 +82,7 @@ public class EditorApplication extends Application {
             pause.setOnFinished(event -> {
                 Task<InterpreterResponse[]> task = new Task<>() {
                     @Override
-                    protected InterpreterResponse[] call() throws Exception {
+                    protected InterpreterResponse[] call(){
                         return get_response(currentText);
                     }
                 };
@@ -93,7 +93,7 @@ public class EditorApplication extends Application {
                     Platform.runLater(() -> {
                         logTextArea.replaceText("");
                         for (InterpreterResponse resp : response) {
-                            appendResponseToLog(resp, logTextArea );
+                            appendResponseToLog(resp, logTextArea);
                         }
                     });
                 });
@@ -118,12 +118,12 @@ public class EditorApplication extends Application {
     private void appendResponseToLog(InterpreterResponse response, StyleClassedTextArea logTextArea) {
 
         int start = logTextArea.getLength();
-        logTextArea.appendText(response.getMessage() + "\n");
+        logTextArea.appendText(response.message() + "\n");
         int end = logTextArea.getLength();
 
-        if (response.getStatus() == ResponseStatus.SUCCESS) {
+        if (response.status() == ResponseStatus.SUCCESS) {
             logTextArea.setStyleClass(start, end, "success-text");
-        } else if (response.getStatus() == ResponseStatus.ERROR) {
+        } else {
             logTextArea.setStyleClass(start, end, "error-text");
         }
     }

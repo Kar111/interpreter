@@ -9,9 +9,6 @@ import org.example.interpreter.CustomErrorListener;
 import org.example.testLang.TestLangLexer;
 import org.example.testLang.TestLangParser;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.List;
 import java.util.ArrayList;
 
 public class InterpreterService {
@@ -19,7 +16,6 @@ public class InterpreterService {
 
         ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
         CustomErrorListener customErrorListener = new CustomErrorListener(interpreterResponses);
-
 
         CharStream charStream = CharStreams.fromString(input);
         TestLangLexer lexer = new TestLangLexer(charStream);
@@ -34,7 +30,6 @@ public class InterpreterService {
 
         // Execute the visitor on the parse tree
         visitor.visit(tree);
-
 
         InterpreterResponse[] interpreterResponsesArray = new InterpreterResponse[interpreterResponses.size()];
         return interpreterResponses.toArray(interpreterResponsesArray);

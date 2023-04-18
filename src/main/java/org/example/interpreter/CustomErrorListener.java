@@ -7,10 +7,10 @@ import org.example.editor.InterpreterResponse;
 import org.example.editor.ResponseStatus;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class CustomErrorListener extends BaseErrorListener {
-    private ArrayList<InterpreterResponse> interpreterResponses;
+    private final ArrayList<InterpreterResponse> interpreterResponses;
+
     public CustomErrorListener(ArrayList<InterpreterResponse> interpreterResponses) {
         this.interpreterResponses = interpreterResponses;
     }

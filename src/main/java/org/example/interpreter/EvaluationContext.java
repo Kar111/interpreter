@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EvaluationContext {
-    private Deque<Map<String, Object>> variableScope;
+    private final Deque<Map<String, Object>> variableScope;
 
     public EvaluationContext() {
 
@@ -26,15 +26,17 @@ public class EvaluationContext {
 
     public void setVariable(String name, Object value) {
 
+        assert variableScope.peek() != null;
         variableScope.peek().put(name, value);
     }
 
     public Object getVariable(String name) {
 
         Map<String, Object> scope = variableScope.peek();
-            if (scope.containsKey(name)) {
-                return scope.get(name);
-            }
+        assert scope != null;
+        if (scope.containsKey(name)) {
+            return scope.get(name);
+        }
 
         return null;
     }

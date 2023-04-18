@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     private final EvaluationContext context;
-    private ArrayList<InterpreterResponse> interpreterResponses;
+    private final ArrayList<InterpreterResponse> interpreterResponses;
 
     public EvaluationContext getEvaluationContext() {
         return context;
@@ -65,7 +65,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitOutExpr(TestLangParser.OutExprContext ctx) {
         Object value = visit(ctx.expr());
-        if(value != null) {
+        if (value != null) {
             interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
         }
         return value;
@@ -106,14 +106,11 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object base = visit(ctx.expr(0));
         Object exponent = visit(ctx.expr(1));
 
-        if (!(base instanceof Number) || !(exponent instanceof Number)) {
+        if (!(base instanceof Number baseNum) || !(exponent instanceof Number exponentNum)) {
 
             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Operands must be numbers for exponentiation"));
             return null;
         }
-
-        Number baseNum = (Number) base;
-        Number exponentNum = (Number) exponent;
 
         return Math.pow(baseNum.doubleValue(), exponentNum.doubleValue());
     }
@@ -128,12 +125,10 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
 
-        if (!(left instanceof Number) || !(right instanceof Number)) {
+        if (!(left instanceof Number leftNumber) || !(right instanceof Number rightNumber)) {
             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Invalid operands for addition or subtraction, operands should be numbers"));
+            return null;
         }
-
-        Number leftNumber = (Number) left;
-        Number rightNumber = (Number) right;
 
         if (ctx.addSubOp.getText().equals("+")) {
             return leftNumber.doubleValue() + rightNumber.doubleValue();
@@ -147,16 +142,14 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
 
-        if (!(left instanceof Integer) || !(right instanceof Integer)) {
+        if (!(left instanceof Integer leftNumber) || !(right instanceof Integer rightNumber)) {
             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Only integers are allowed in range expressions."));
             return null;
         }
 
-        Integer leftNumber = (Integer) left;
-        Integer rightNumber = (Integer) right;
-
         if (rightNumber < leftNumber) {
             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Right number must not be less than left number in a range expression."));
+            return null;
         }
 
         List<Integer> range = new ArrayList<>();
@@ -188,7 +181,9 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
             return null;
         }
         Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
-
+        if (range == null) {
+            return null;
+        }
         List<Object> sequence = (List<Object>) range;
 
         context.enterScope();

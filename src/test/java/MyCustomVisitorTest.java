@@ -2,6 +2,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.example.editor.InterpreterResponse;
 import org.example.interpreter.EvaluationContext;
 import org.example.interpreter.MyCustomVisitor;
 import org.example.testLang.TestLangLexer;
@@ -11,8 +12,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -22,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MyCustomVisitorTest {
 
-    private MyCustomVisitor prepareTest(String input) {
+    private MyCustomVisitor prepareTest(String input, ArrayList<InterpreterResponse> interpreterResponses) {
         CharStream charStream = CharStreams.fromString(input);
         TestLangLexer lexer = new TestLangLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
+        MyCustomVisitor visitor = new MyCustomVisitor(interpreterResponses);
         visitor.visit(tree);
         return visitor;
     }
@@ -37,7 +36,7 @@ public class MyCustomVisitorTest {
     public void visitVarDecl() {
         //SETUP
         String input = "var myVar = 11";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -52,7 +51,7 @@ public class MyCustomVisitorTest {
     public void visitNumberLiteral() {
         //SETUP
         String input = "var myVar = 11.6";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -67,7 +66,7 @@ public class MyCustomVisitorTest {
     public void visitMulDivExpr() {
         //SETUP
         String input = "var myVar = 11 * 4";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -82,7 +81,7 @@ public class MyCustomVisitorTest {
     public void visitAddSubExpr() {
         //SETUP
         String input = "var myVar = 11 + 4";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -97,7 +96,7 @@ public class MyCustomVisitorTest {
     public void visitPowExpr() {
         //SETUP
         String input = "var myVar = 2 ^ 4";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -111,7 +110,7 @@ public class MyCustomVisitorTest {
     public void visitMapExpression() {
         //SETUP
         String input = "var seq = map({0, 2}, i -> i * 2)";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -126,7 +125,7 @@ public class MyCustomVisitorTest {
     public void visitReduceExpression() {
         //SETUP
         String input = "var seq = map({0, 2}, i -> i * 2)";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -141,7 +140,7 @@ public class MyCustomVisitorTest {
     public void visitRangeExpr() {
         //SETUP
         String input = "var range = {1,4}";
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
@@ -156,35 +155,13 @@ public class MyCustomVisitorTest {
 
         //SETUP
         String input = "var v = 11 \n out v";
-        CharStream charStream = CharStreams.fromString(input);
-        TestLangLexer lexer = new TestLangLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        TestLangParser parser = new TestLangParser(tokens);
-        ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
+        ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-
-        // Save the original System.out
-        PrintStream originalOut = System.out;
-        // Create a custom output stream
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream customOut = new PrintStream(outputStream);
-
-        // Set System.out to the custom output stream
-        System.setOut(customOut);
-
-        // Execute the visitor on the parse tree
-        visitor.visit(tree);
-
-        // Reset System.out to the original output stream
-        System.setOut(originalOut);
-
-        // Get the output as a string
-        String output = outputStream.toString();
+        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("11", output.trim());
+        assertEquals("11", interpreterResponses.get(0).message());
     }
 
     @Test
@@ -192,81 +169,36 @@ public class MyCustomVisitorTest {
 
         //SETUP
         String input = "print \"hello world\"";
-        CharStream charStream = CharStreams.fromString(input);
-        TestLangLexer lexer = new TestLangLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        TestLangParser parser = new TestLangParser(tokens);
-        ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
+        ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-
-        // Save the original System.out
-        PrintStream originalOut = System.out;
-        // Create a custom output stream
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream customOut = new PrintStream(outputStream);
-
-        // Set System.out to the custom output stream
-        System.setOut(customOut);
-
-        // Execute the visitor on the parse tree
-        visitor.visit(tree);
-
-        // Reset System.out to the original output stream
-        System.setOut(originalOut);
-
-        // Get the output as a string
-        String output = outputStream.toString();
+        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("hello world", output.trim());
+        assertEquals("hello world", interpreterResponses.get(0).message());
     }
 
     @Test
     public void testTheCodeForGivenExample() {
-
-        //SETUP
-        String input = "var n = 500\n" +
-                "var sequence = map({0, n}, i -> (-1)^i / (2.0 * i + 1))\n" +
-                "var pi = 4 * reduce(sequence, 0, x y -> x + y)\n" +
-                "print \"pi = \"\n" +
-                "out pi";
-        CharStream charStream = CharStreams.fromString(input);
-        TestLangLexer lexer = new TestLangLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        TestLangParser parser = new TestLangParser(tokens);
-        ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
+        String input = """
+                var n = 500
+                var sequence = map({0, n}, i -> (-1)^i / (2.0 * i + 1))
+                var pi = 4 * reduce(sequence, 0, x y -> x + y)
+                print "pi = "
+                out pi""";
+        ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-
-        // Save the original System.out
-        PrintStream originalOut = System.out;
-        // Create a custom output stream
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream customOut = new PrintStream(outputStream);
-
-        // Set System.out to the custom output stream
-        System.setOut(customOut);
-
-        // Execute the visitor on the parse tree
-        visitor.visit(tree);
-
-        // Reset System.out to the original output stream
-        System.setOut(originalOut);
-
-        // Get the output as a string
-        String output = outputStream.toString();
+        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("pi = 3.143588659585789", output.trim());
+        assertEquals("pi = 3.143588659585789", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());
     }
 
     @ParameterizedTest
     @MethodSource("arithmeticalExpressions")
     void testArithmeticalExpression(String input, double expectedValue) {
-        MyCustomVisitor visitor = prepareTest(input);
+        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
         EvaluationContext context = visitor.getEvaluationContext();
