@@ -19,7 +19,7 @@ TestLang supports the following features:
 
 **Building the Project**
 
-In order to run it from InteliJIDEA
+In order to run it from an IDE
 - Run main function inside org.example/Main
 
 **Example TestLang Code**
