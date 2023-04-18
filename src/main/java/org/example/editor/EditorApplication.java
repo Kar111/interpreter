@@ -19,6 +19,8 @@ import org.fxmisc.richtext.model.StyleSpansBuilder;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +41,7 @@ public class EditorApplication extends Application {
             "\\b(" + String.join("|", KEYWORD_STYLES.keySet()) + ")\\b" + "|(\"[^\"]+\")"
     );
 
+    private ExecutorService interpreterExecutor = Executors.newSingleThreadExecutor();
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(EditorApplication.class.getResource("/org/example/editor/editor-view.fxml"));
@@ -98,7 +101,13 @@ public class EditorApplication extends Application {
                     });
                 });
 
+                // Cancel the previous task if it's still running
+                interpreterExecutor.shutdownNow();
+                // Create a new single-threaded executor
+                interpreterExecutor = Executors.newSingleThreadExecutor();
+                // Execute the new task
                 new Thread(task).start();
+                interpreterExecutor.submit(task);
             });
 
             // If the pause is still running, stop it and restart
@@ -142,6 +151,11 @@ public class EditorApplication extends Application {
         }
         spansBuilder.add(Collections.emptyList(), text.length() - lastKeywordEnd);
         return spansBuilder.create();
+    }
+
+    @Override
+    public void stop() {
+        interpreterExecutor.shutdownNow(); // Forcefully cancel running tasks after app exit
     }
 
 }
