@@ -19,6 +19,7 @@ public class InterpreterService {
 
         ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
         CustomErrorListener customErrorListener = new CustomErrorListener();
+        ParseTree tree;
         try {
             CharStream charStream = CharStreams.fromString(input);
             TestLangLexer lexer = new TestLangLexer(charStream);
@@ -30,8 +31,13 @@ public class InterpreterService {
             parser.addErrorListener(customErrorListener);
 
             // Parse the input and create the AST
-            ParseTree tree = parser.program();
-            MyCustomVisitor visitor = new MyCustomVisitor();
+            tree = parser.program();
+        } catch (InterpreterException e) {
+            InterpreterResponse[] interpreterErrorResponseArray = new InterpreterResponse[1];
+            interpreterErrorResponseArray[0] = new InterpreterResponse(ResponseStatus.ERROR, e.getMessage());
+            return interpreterErrorResponseArray;
+        }
+         try {MyCustomVisitor visitor = new MyCustomVisitor();
             ProgramNode programNode = (ProgramNode) visitor.visit(tree);
 
             // Evaluate the AST
@@ -39,9 +45,7 @@ public class InterpreterService {
             astEvaluator.evaluateProgram(programNode);
 
         } catch (InterpreterException e) {
-            InterpreterResponse[] interpreterErrorResponseArray = new InterpreterResponse[1];
-            interpreterErrorResponseArray[0] = new InterpreterResponse(ResponseStatus.ERROR, e.getMessage());
-            return interpreterErrorResponseArray;
+             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, e.getMessage()));
         }
 
         InterpreterResponse[] interpreterResponsesArray = new InterpreterResponse[interpreterResponses.size()];
