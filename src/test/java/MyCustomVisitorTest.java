@@ -158,7 +158,7 @@ public class MyCustomVisitorTest {
         ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
+        prepareTest(input, interpreterResponses);
 
         //ASSERT
         assertEquals("11", interpreterResponses.get(0).message());
@@ -172,7 +172,7 @@ public class MyCustomVisitorTest {
         ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
+        prepareTest(input, interpreterResponses);
 
         //ASSERT
         assertEquals("hello world", interpreterResponses.get(0).message());
@@ -180,6 +180,8 @@ public class MyCustomVisitorTest {
 
     @Test
     public void testTheCodeForGivenExample() {
+
+        //SETUP
         String input = """
                 var n = 500
                 var sequence = map({0, n}, i -> (-1)^i / (2.0 * i + 1))
@@ -189,7 +191,7 @@ public class MyCustomVisitorTest {
         ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
 
         //EXECUTE
-        MyCustomVisitor visitor = prepareTest(input, interpreterResponses);
+        prepareTest(input, interpreterResponses);
 
         //ASSERT
         assertEquals("pi = 3.143588659585789", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());

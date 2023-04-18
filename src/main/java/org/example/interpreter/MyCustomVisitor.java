@@ -34,8 +34,9 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     public Object visitVarDecl(TestLangParser.VarDeclContext ctx) {
         String variableName = ctx.ID().getText();
         Object value = visit(ctx.expr());
-
-        context.setVariable(variableName, value);
+        if(variableName != null && value != null) {
+            context.setVariable(variableName, value);
+        }
         return value;
     }
 
@@ -55,8 +56,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         String variableName = ctx.ID().getText();
 
         if (!context.isVariableDeclared(variableName)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Variable '" + variableName + "' is not declared."));
-            return null;
+            throw new InterpreterException("Variable '" + variableName + "' is not declared.");
         }
 
         return context.getVariable(variableName);
@@ -75,7 +75,9 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     public Object visitPrintString(TestLangParser.PrintStringContext ctx) {
         String str = ctx.STRING().getText();
         str = str.substring(1, str.length() - 1); // Remove "s
-        interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, str));
+        if(!str.isEmpty()) {
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, str));
+        }
         return null;
     }
 
@@ -85,31 +87,26 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number leftNum) || !(right instanceof Number rightNum)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "\"Operands must be numbers for multiplication and division\""));
-            return null;
+            throw new InterpreterException("Operands must be numbers for multiplication and division.");
         }
 
         if (ctx.mulDivOp.getText().equals("*")) {
             return leftNum.doubleValue() * rightNum.doubleValue();
         } else {
             if (rightNum.doubleValue() == 0) {
-                interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Division by zero is not allowed."));
-                return null;
-            }
+                throw new InterpreterException("Division by zero is not allowed.");
+                }
             return leftNum.doubleValue() / rightNum.doubleValue();
         }
     }
 
     @Override
     public Object visitPowExpr(TestLangParser.PowExprContext ctx) {
-        //TODO get rid of the duplicate code
         Object base = visit(ctx.expr(0));
         Object exponent = visit(ctx.expr(1));
 
         if (!(base instanceof Number baseNum) || !(exponent instanceof Number exponentNum)) {
-
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Operands must be numbers for exponentiation"));
-            return null;
+            throw new InterpreterException("Operands must be numbers for exponentiation");
         }
 
         return Math.pow(baseNum.doubleValue(), exponentNum.doubleValue());
@@ -126,8 +123,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number leftNumber) || !(right instanceof Number rightNumber)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Invalid operands for addition or subtraction, operands should be numbers"));
-            return null;
+            throw new InterpreterException("Invalid operands for addition or subtraction, operands should be numbers");
         }
 
         if (ctx.addSubOp.getText().equals("+")) {
@@ -143,13 +139,11 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Integer leftNumber) || !(right instanceof Integer rightNumber)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Only integers are allowed in range expressions."));
-            return null;
+            throw new InterpreterException("Only integers are allowed in range expressions.");
         }
 
         if (rightNumber < leftNumber) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Right number must not be less than left number in a range expression."));
-            return null;
+            throw new InterpreterException("Right number must not be less than left number in a range expression.");
         }
 
         List<Integer> range = new ArrayList<>();
@@ -177,8 +171,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitMapExpression(TestLangParser.MapExpressionContext ctx) {
         if (!(ctx.mapExpr().expr(0) instanceof TestLangParser.RangeExprContext)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "First argument must be a range expression: {expr1, expr2}"));
-            return null;
+            throw new InterpreterException("First argument must be a range expression: {expr1, expr2}");
         }
         Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
         if (range == null) {
@@ -223,8 +216,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object range = visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
 
         if (!(range instanceof List)) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Reduce function expects a sequence as the first argument."));
-            return null;
+            throw new InterpreterException("Reduce function expects a sequence as the first argument.");
         }
 
         List<Object> sequence = (List<Object>) range;
