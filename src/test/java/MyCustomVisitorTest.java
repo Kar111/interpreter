@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -27,7 +28,7 @@ public class MyCustomVisitorTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor();
+        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
         visitor.visit(tree);
         return visitor;
     }
@@ -160,7 +161,7 @@ public class MyCustomVisitorTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor();
+        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
 
         //EXECUTE
 
@@ -196,7 +197,7 @@ public class MyCustomVisitorTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor();
+        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
 
         //EXECUTE
 
@@ -236,7 +237,7 @@ public class MyCustomVisitorTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor();
+        MyCustomVisitor visitor = new MyCustomVisitor(new ArrayList<>());
 
         //EXECUTE
 

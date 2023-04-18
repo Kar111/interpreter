@@ -12,11 +12,14 @@ import org.example.testLang.TestLangParser;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.ArrayList;
 
 public class InterpreterService {
     public static InterpreterResponse[] get_response(String input) {
 
-        CustomErrorListener customErrorListener = new CustomErrorListener();
+        ArrayList<InterpreterResponse> interpreterResponses = new ArrayList<>();
+        CustomErrorListener customErrorListener = new CustomErrorListener(interpreterResponses);
+
 
         CharStream charStream = CharStreams.fromString(input);
         TestLangLexer lexer = new TestLangLexer(charStream);
@@ -27,33 +30,13 @@ public class InterpreterService {
         parser.removeErrorListeners(); // Remove the default error listeners
         parser.addErrorListener(customErrorListener);
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor();
-
-        // Save the original System.out
-        PrintStream originalOut = System.out;
-        // Create a custom output stream
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream customOut = new PrintStream(outputStream);
-
-        // Set System.out to the custom output stream
-        System.setOut(customOut);
+        MyCustomVisitor visitor = new MyCustomVisitor(interpreterResponses);
 
         // Execute the visitor on the parse tree
         visitor.visit(tree);
 
-        List<String> errors = customErrorListener.getErrors();
-        for (String error : errors) {
-            System.out.println(error);
-        }
 
-        // Reset System.out to the original output stream
-        System.setOut(originalOut);
-
-        // Get the output as a string
-        String output = outputStream.toString();
-
-        return new InterpreterResponse[]{
-                new InterpreterResponse(ResponseStatus.SUCCESS, output),
-        };
+        InterpreterResponse[] interpreterResponsesArray = new InterpreterResponse[interpreterResponses.size()];
+        return interpreterResponses.toArray(interpreterResponsesArray);
     }
 }

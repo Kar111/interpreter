@@ -1,5 +1,7 @@
 package org.example.interpreter;
 
+import org.example.editor.InterpreterResponse;
+import org.example.editor.ResponseStatus;
 import org.example.testLang.TestLangBaseVisitor;
 import org.example.testLang.TestLangParser;
 
@@ -11,14 +13,15 @@ import java.util.stream.Collectors;
 
 public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     private final EvaluationContext context;
+    private ArrayList<InterpreterResponse> interpreterResponses;
 
     public EvaluationContext getEvaluationContext() {
         return context;
     }
 
-    public MyCustomVisitor() {
+    public MyCustomVisitor(ArrayList<InterpreterResponse> interpreterResponses) {
         this.context = new EvaluationContext();
-
+        this.interpreterResponses = interpreterResponses;
     }
 
     @Override
@@ -30,11 +33,6 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitVarDecl(TestLangParser.VarDeclContext ctx) {
         String variableName = ctx.ID().getText();
-
-        if(variableName == "missing ID") {
-            System.out.println("Missing variable ID");
-            return null;
-        }
         Object value = visit(ctx.expr());
 
         context.setVariable(variableName, value);
@@ -57,7 +55,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         String variableName = ctx.ID().getText();
 
         if (!context.isVariableDeclared(variableName)) {
-            System.out.println("Variable '" + variableName + "' is not declared.");
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Variable '" + variableName + "' is not declared."));
             return null;
         }
 
@@ -67,7 +65,9 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitOutExpr(TestLangParser.OutExprContext ctx) {
         Object value = visit(ctx.expr());
-        System.out.println(value);
+        if(value != null) {
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
+        }
         return value;
     }
 
@@ -75,8 +75,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     public Object visitPrintString(TestLangParser.PrintStringContext ctx) {
         String str = ctx.STRING().getText();
         str = str.substring(1, str.length() - 1); // Remove "s
-        //TODO just return this
-        System.out.print(str);
+        interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, str));
         return null;
     }
 
@@ -85,18 +84,16 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
 
-        if (!(left instanceof Number) || !(right instanceof Number)) {
-            System.out.println("Operands must be numbers for multiplication and division");
+        if (!(left instanceof Number leftNum) || !(right instanceof Number rightNum)) {
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "\"Operands must be numbers for multiplication and division\""));
+            return null;
         }
-
-        Number leftNum = (Number) left;
-        Number rightNum = (Number) right;
 
         if (ctx.mulDivOp.getText().equals("*")) {
             return leftNum.doubleValue() * rightNum.doubleValue();
         } else {
             if (rightNum.doubleValue() == 0) {
-                System.out.println("Division by zero is not allowed");
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Division by zero is not allowed."));
                 return null;
             }
             return leftNum.doubleValue() / rightNum.doubleValue();
@@ -110,7 +107,8 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object exponent = visit(ctx.expr(1));
 
         if (!(base instanceof Number) || !(exponent instanceof Number)) {
-            System.out.println("Operands must be numbers for exponentiation");
+
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Operands must be numbers for exponentiation"));
             return null;
         }
 
@@ -131,7 +129,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Number) || !(right instanceof Number)) {
-            System.out.println("Invalid operands for addition or subtraction, operands should be numbers");
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Invalid operands for addition or subtraction, operands should be numbers"));
         }
 
         Number leftNumber = (Number) left;
@@ -150,7 +148,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object right = visit(ctx.expr(1));
 
         if (!(left instanceof Integer) || !(right instanceof Integer)) {
-            System.out.println("Only integers are allowed in range expressions.");
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Only integers are allowed in range expressions."));
             return null;
         }
 
@@ -158,7 +156,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Integer rightNumber = (Integer) right;
 
         if (rightNumber < leftNumber) {
-            System.out.println("Right number must not be less than left number in a range expression.");
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Right number must not be less than left number in a range expression."));
         }
 
         List<Integer> range = new ArrayList<>();
@@ -186,7 +184,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     @Override
     public Object visitMapExpression(TestLangParser.MapExpressionContext ctx) {
         if (!(ctx.mapExpr().expr(0) instanceof TestLangParser.RangeExprContext)) {
-            System.out.println(("First argument must be a range expression: {expr1, expr2}"));
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "First argument must be a range expression: {expr1, expr2}"));
             return null;
         }
         Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
@@ -230,7 +228,7 @@ public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
         Object range = visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
 
         if (!(range instanceof List)) {
-            System.out.println("Reduce function expects a sequence as the first argument.");
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, "Reduce function expects a sequence as the first argument."));
             return null;
         }
 

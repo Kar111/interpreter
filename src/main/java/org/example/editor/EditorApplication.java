@@ -144,8 +144,4 @@ public class EditorApplication extends Application {
         return spansBuilder.create();
     }
 
-
-    public static void main(String[] args) {
-        launch();
-    }
 }
