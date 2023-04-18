@@ -9,4 +9,5 @@ module org.example.editor {
     exports org.example.interpreter;
     opens org.example.editor to javafx.fxml;
     exports org.example.editor;
+    exports org.example.ast;
 }

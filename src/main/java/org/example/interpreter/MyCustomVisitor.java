@@ -1,247 +1,156 @@
 package org.example.interpreter;
 
-import org.example.editor.InterpreterResponse;
-import org.example.editor.ResponseStatus;
+import org.example.ast.*;
 import org.example.testLang.TestLangBaseVisitor;
 import org.example.testLang.TestLangParser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class MyCustomVisitor extends TestLangBaseVisitor<Object> {
     private final EvaluationContext context;
-    private final ArrayList<InterpreterResponse> interpreterResponses;
 
     public EvaluationContext getEvaluationContext() {
         return context;
     }
 
-    public MyCustomVisitor(ArrayList<InterpreterResponse> interpreterResponses) {
+    public MyCustomVisitor() {
         this.context = new EvaluationContext();
-        this.interpreterResponses = interpreterResponses;
     }
 
     @Override
-    public Object visitProgram(TestLangParser.ProgramContext ctx) {
+    public ProgramNode visitProgram(TestLangParser.ProgramContext ctx) {
+        List<StmtNode> stmtNodes = new ArrayList<>();
 
-        return visitChildren(ctx);
-    }
-
-    @Override
-    public Object visitVarDecl(TestLangParser.VarDeclContext ctx) {
-        String variableName = ctx.ID().getText();
-        Object value = visit(ctx.expr());
-        if(variableName != null && value != null) {
-            context.setVariable(variableName, value);
+        for (TestLangParser.StmtContext stmtCtx : ctx.stmt()) {
+            StmtNode stmtNode = (StmtNode) visit(stmtCtx);
+            stmtNodes.add(stmtNode);
         }
-        return value;
+
+        return new ProgramNode(stmtNodes);
     }
 
     @Override
-    public Object visitNumberLiteral(TestLangParser.NumberLiteralContext ctx) {
+    public VarDeclNode visitVarDecl(TestLangParser.VarDeclContext ctx) {
+        String variableName = ctx.ID().getText();
+        ExprNode exprNode = (ExprNode) visit(ctx.expr());
+
+        return new VarDeclNode(variableName, exprNode);
+    }
+
+    @Override
+    public NumberLiteralNode visitNumberLiteral(TestLangParser.NumberLiteralContext ctx) {
         String numberText = ctx.NUMBER().getText();
+        Number value;
 
         if (numberText.contains(".")) {
-            return Double.parseDouble(numberText);
+            value = Double.parseDouble(numberText);
         } else {
-            return Integer.parseInt(numberText);
+            value = Integer.parseInt(numberText);
         }
+
+        return new NumberLiteralNode(value);
     }
 
     @Override
-    public Object visitIdentifier(TestLangParser.IdentifierContext ctx) {
+    public IdentifierNode visitIdentifier(TestLangParser.IdentifierContext ctx) {
         String variableName = ctx.ID().getText();
-
-        if (!context.isVariableDeclared(variableName)) {
-            throw new InterpreterException("Variable '" + variableName + "' is not declared.");
-        }
-
-        return context.getVariable(variableName);
+        return new IdentifierNode(variableName);
     }
 
     @Override
-    public Object visitOutExpr(TestLangParser.OutExprContext ctx) {
-        Object value = visit(ctx.expr());
-        if (value != null) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
-        }
-        return value;
+    public OutExprNode visitOutExpr(TestLangParser.OutExprContext ctx) {
+        ExprNode exprNode = (ExprNode) visit(ctx.expr());
+        return new OutExprNode(exprNode);
     }
 
     @Override
-    public Object visitPrintString(TestLangParser.PrintStringContext ctx) {
+    public PrintStringNode visitPrintString(TestLangParser.PrintStringContext ctx) {
         String str = ctx.STRING().getText();
         str = str.substring(1, str.length() - 1); // Remove "s
-        if(!str.isEmpty()) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, str));
-        }
-        return null;
+        return new PrintStringNode(str);
     }
 
     @Override
-    public Object visitMulDivExpr(TestLangParser.MulDivExprContext ctx) {
-        Object left = visit(ctx.expr(0));
-        Object right = visit(ctx.expr(1));
-
-        if (!(left instanceof Number leftNum) || !(right instanceof Number rightNum)) {
-            throw new InterpreterException("Operands must be numbers for multiplication and division.");
-        }
+    public BinaryOpNode visitMulDivExpr(TestLangParser.MulDivExprContext ctx) {
+        ExprNode left = (ExprNode) visit(ctx.expr(0));
+        ExprNode right = (ExprNode) visit(ctx.expr(1));
 
         if (ctx.mulDivOp.getText().equals("*")) {
-            return leftNum.doubleValue() * rightNum.doubleValue();
+            return new MulNode(left, right);
         } else {
-            if (rightNum.doubleValue() == 0) {
-                throw new InterpreterException("Division by zero is not allowed.");
-                }
-            return leftNum.doubleValue() / rightNum.doubleValue();
+            return new DivNode(left, right);
         }
     }
 
     @Override
-    public Object visitPowExpr(TestLangParser.PowExprContext ctx) {
-        Object base = visit(ctx.expr(0));
-        Object exponent = visit(ctx.expr(1));
+    public BinaryOpNode visitPowExpr(TestLangParser.PowExprContext ctx) {
+        ExprNode base = (ExprNode) visit(ctx.expr(0));
+        ExprNode exponent = (ExprNode) visit(ctx.expr(1));
 
-        if (!(base instanceof Number baseNum) || !(exponent instanceof Number exponentNum)) {
-            throw new InterpreterException("Operands must be numbers for exponentiation");
-        }
-
-        return Math.pow(baseNum.doubleValue(), exponentNum.doubleValue());
+        return new PowNode(base, exponent);
     }
 
     @Override
-    public Object visitParenExpr(TestLangParser.ParenExprContext ctx) {
-        return visit(ctx.expr());
+    public ParenExprNode visitParenExpr(TestLangParser.ParenExprContext ctx) {
+        ExprNode innerExpr = (ExprNode) visit(ctx.expr());
+        return new ParenExprNode(innerExpr);
     }
 
-    @Override
-    public Object visitAddSubExpr(TestLangParser.AddSubExprContext ctx) {
-        Object left = visit(ctx.expr(0));
-        Object right = visit(ctx.expr(1));
 
-        if (!(left instanceof Number leftNumber) || !(right instanceof Number rightNumber)) {
-            throw new InterpreterException("Invalid operands for addition or subtraction, operands should be numbers");
-        }
+    @Override
+    public BinaryOpNode visitAddSubExpr(TestLangParser.AddSubExprContext ctx) {
+        ExprNode left = (ExprNode) visit(ctx.expr(0));
+        ExprNode right = (ExprNode) visit(ctx.expr(1));
 
         if (ctx.addSubOp.getText().equals("+")) {
-            return leftNumber.doubleValue() + rightNumber.doubleValue();
+            return new AddNode(left, right);
         } else {
-            return leftNumber.doubleValue() - rightNumber.doubleValue();
+            return new SubNode(left, right);
         }
     }
 
     @Override
-    public Object visitRangeExpr(TestLangParser.RangeExprContext ctx) {
-        Object left = visit(ctx.expr(0));
-        Object right = visit(ctx.expr(1));
+    public ExprNode visitRangeExpr(TestLangParser.RangeExprContext ctx) {
+        ExprNode left = (ExprNode) visit(ctx.expr(0));
+        ExprNode right = (ExprNode) visit(ctx.expr(1));
 
-        if (!(left instanceof Integer leftNumber) || !(right instanceof Integer rightNumber)) {
-            throw new InterpreterException("Only integers are allowed in range expressions.");
-        }
-
-        if (rightNumber < leftNumber) {
-            throw new InterpreterException("Right number must not be less than left number in a range expression.");
-        }
-
-        List<Integer> range = new ArrayList<>();
-        for (int i = leftNumber; i <= rightNumber; i++) {
-            range.add(i);
-        }
-
-        return range;
+        return new RangeExprNode(left, right);
     }
 
-    /**
-     * Evaluates a map expression, applying a given lambda function to each element in a sequence.
-     *
-     * <p>The method first evaluates the range expression, ensuring it is a valid sequence.
-     * Then, it enters a new scope for the lambda function and creates a lambda function that maps
-     * each element in the sequence. The lambda function uses the provided variable name to store
-     * the input value for each element in the sequence.
-     *
-     * <p>After mapping the sequence, the method exits the lambda function scope and returns the
-     * mapped sequence.
-     *
-     * @param ctx The MapExpressionContext object provided by the ANTLR parser.
-     * @return The mapped sequence after applying the lambda function to each element in the sequence.
-     */
     @Override
-    public Object visitMapExpression(TestLangParser.MapExpressionContext ctx) {
+    public ExprNode visitMapExpression(TestLangParser.MapExpressionContext ctx) {
         if (!(ctx.mapExpr().expr(0) instanceof TestLangParser.RangeExprContext)) {
             throw new InterpreterException("First argument must be a range expression: {expr1, expr2}");
         }
-        Object range = visit(ctx.mapExpr().expr(0)); // Evaluate the range expression
-        if (range == null) {
-            return null;
-        }
-        List<Object> sequence = (List<Object>) range;
-
-        context.enterScope();
-
+        ExprNode range = (ExprNode) visit(ctx.mapExpr().expr(0));
         String lambdaVarName = ctx.mapExpr().ID().getText();
+        ExprNode lambdaBody = (ExprNode) visit(ctx.mapExpr().expr(1));
 
-        Function<Object, Object> lambdaFunction = (input) -> {
-            context.setVariable(lambdaVarName, input);
-            return visit(ctx.mapExpr().expr(1));
-        };
-
-        List<Object> mappedSequence = sequence.stream().map(lambdaFunction).collect(Collectors.toList());
-
-        context.exitScope();
-
-        return mappedSequence;
+        return new MapExprNode(range, lambdaVarName, lambdaBody);
     }
 
     /**
-     * Visits a 'reduce' expression in the language, which applies a binary lambda function to elements
-     * of a sequence, accumulating the result of the function application.
+     * Visits a 'reduce' expression in the parse tree and creates an instance of {ReduceExprNode}.
+     * This method processes the range expression, initial value, variable names, and lambda body for
+     * the reduce operation and returns a ReduceExprNode object that represents the entire
+     * reduce expression.
      *
-     * <p>The 'reduce' expression has the following structure:
-     * REDUCE '(' expr ',' expr ',' ID ID ARROW expr ')'
-     * - The first expr represents the input sequence.
-     * - The second expr represents the initial value.
-     * - ID ID ARROW expr represents the lambda function that takes two arguments and returns a single value.
-     *
-     * <p>Example usage in the language:
-     * reduce({1,4}, 0, a b -> a + b)
-     *
-     * @param ctx The ReduceExpressionContext object representing the 'reduce' expression in the parse tree.
-     * @return The result of the 'reduce' operation after applying the lambda function on the input sequence.
+     * @param ctx The TestLangParser.ReduceExpressionContext object representing the 'reduce' expression
+     *            in the parse tree.
+     * @return A ReduceExprNode object representing the 'reduce' expression in the AST.
      */
     @Override
-    public Object visitReduceExpression(TestLangParser.ReduceExpressionContext ctx) {
-        Object range = visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
-
-        if (!(range instanceof List)) {
-            throw new InterpreterException("Reduce function expects a sequence as the first argument.");
-        }
-
-        List<Object> sequence = (List<Object>) range;
-
-        // Get the initial value
-        Object initialValue = visit(ctx.reduceExpr().expr(1));
-
-        // Create a new scope for the lambda function
-        context.enterScope();
+    public ExprNode visitReduceExpression(TestLangParser.ReduceExpressionContext ctx) {
+        ExprNode range = (ExprNode) visit(ctx.reduceExpr().expr(0)); // Evaluate the range expression
+        ExprNode initialValue = (ExprNode) visit(ctx.reduceExpr().expr(1));
 
         String lambdaVarName1 = ctx.reduceExpr().ID(0).getText();
         String lambdaVarName2 = ctx.reduceExpr().ID(1).getText();
+        ExprNode lambdaBody = (ExprNode) visit(ctx.reduceExpr().expr(2));
 
-        BinaryOperator<Object> lambdaFunction = (input1, input2) -> {
-            context.setVariable(lambdaVarName1, input1);
-            context.setVariable(lambdaVarName2, input2);
-            return visit(ctx.reduceExpr().expr(2));
-        };
-
-        Object reducedValue = sequence.stream().reduce(initialValue, lambdaFunction);
-
-        // Exit the lambda function scope
-        context.exitScope();
-
-        return reducedValue;
+        return new ReduceExprNode(range, initialValue, lambdaVarName1, lambdaVarName2, lambdaBody);
     }
+
 
 }

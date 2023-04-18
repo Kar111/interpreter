@@ -2,7 +2,9 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.example.ast.ProgramNode;
 import org.example.editor.InterpreterResponse;
+import org.example.interpreter.AstEvaluator;
 import org.example.interpreter.EvaluationContext;
 import org.example.interpreter.MyCustomVisitor;
 import org.example.testLang.TestLangLexer;
@@ -21,25 +23,32 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MyCustomVisitorTest {
 
-    private MyCustomVisitor prepareTest(String input, ArrayList<InterpreterResponse> interpreterResponses) {
+    private AstEvaluator prepareTest(String input, ArrayList<InterpreterResponse> interpreterResponses) {
+        // Create the lexer and parser
         CharStream charStream = CharStreams.fromString(input);
         TestLangLexer lexer = new TestLangLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         TestLangParser parser = new TestLangParser(tokens);
+
+        // Parse the input and create the AST
         ParseTree tree = parser.program();
-        MyCustomVisitor visitor = new MyCustomVisitor(interpreterResponses);
-        visitor.visit(tree);
-        return visitor;
+        MyCustomVisitor visitor = new MyCustomVisitor();
+        ProgramNode programNode = (ProgramNode) visitor.visit(tree);
+
+        // Evaluate the AST
+        AstEvaluator astEvaluator = new AstEvaluator(interpreterResponses);
+        astEvaluator.evaluateProgram(programNode);
+        return astEvaluator;
     }
 
     @Test
     public void visitVarDecl() {
         //SETUP
         String input = "var myVar = 11";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
@@ -51,10 +60,10 @@ public class MyCustomVisitorTest {
     public void visitNumberLiteral() {
         //SETUP
         String input = "var myVar = 11.6";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
@@ -66,10 +75,10 @@ public class MyCustomVisitorTest {
     public void visitMulDivExpr() {
         //SETUP
         String input = "var myVar = 11 * 4";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
@@ -81,10 +90,10 @@ public class MyCustomVisitorTest {
     public void visitAddSubExpr() {
         //SETUP
         String input = "var myVar = 11 + 4";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
@@ -96,24 +105,25 @@ public class MyCustomVisitorTest {
     public void visitPowExpr() {
         //SETUP
         String input = "var myVar = 2 ^ 4";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
         assertEquals(Math.pow(2, 4), value);
 
     }
+
     @Test
     public void visitMapExpression() {
         //SETUP
         String input = "var seq = map({0, 2}, i -> i * 2)";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("seq");
 
         //ASSERT
@@ -122,17 +132,33 @@ public class MyCustomVisitorTest {
     }
 
     @Test
-    public void visitReduceExpression() {
+    public void visitReduceExpressionWhichTakesRange() {
         //SETUP
-        String input = "var seq = map({0, 2}, i -> i * 2)";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        String input = "var seq = reduce({5, 7}, 1, x y -> x * y)";
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("seq");
 
         //ASSERT
-        assertEquals(Arrays.asList(0.0, 2.0, 4.0), value);
+        assertEquals(1.0 * 5 * 6 * 7, value);
+
+    }
+
+    @Test
+    public void visitReduceExpressionWhichTakesIdentifier() {
+        //SETUP
+        String input = "var seq = map({1, 3}, i -> i * 2) \n" +
+                "var reducedSeq = reduce(seq, 1, x y -> x * y)";
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
+
+        //EXECUTE
+        EvaluationContext context = astEvaluator.getEvaluationContext();
+        Object value = context.getVariable("reducedSeq");
+
+        //ASSERT
+        assertEquals(48.0, value);
 
     }
 
@@ -140,10 +166,10 @@ public class MyCustomVisitorTest {
     public void visitRangeExpr() {
         //SETUP
         String input = "var range = {1,4}";
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("range");
 
         //ASSERT
@@ -200,10 +226,10 @@ public class MyCustomVisitorTest {
     @ParameterizedTest
     @MethodSource("arithmeticalExpressions")
     void testArithmeticalExpression(String input, double expectedValue) {
-        MyCustomVisitor visitor = prepareTest(input, new ArrayList<>());
+        AstEvaluator astEvaluator = prepareTest(input, new ArrayList<>());
 
         //EXECUTE
-        EvaluationContext context = visitor.getEvaluationContext();
+        EvaluationContext context = astEvaluator.getEvaluationContext();
         Object value = context.getVariable("myVar");
 
         //ASSERT
