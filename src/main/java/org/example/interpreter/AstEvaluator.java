@@ -47,12 +47,37 @@ public class AstEvaluator {
         }
     }
 
+    /**
+     * Evaluates an OutExprNode and adds the result to the interpreterResponses list. If the result is
+     * an ArrayList with more than 1000 elements, only the first 500 elements, three dots, and the last
+     * 5 elements are included in the response.
+     *
+     * @param outExpr The OutExprNode to be evaluated.
+     */
     private void evaluateOutExpr(OutExprNode outExpr) {
         Object value = evaluateExpr(outExpr.getExpression());
+
         if (value != null) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
+            if (value instanceof ArrayList && ((ArrayList<?>) value).size() > 1000) {
+                List<?> list = (ArrayList<?>) value;
+                StringBuilder sb = new StringBuilder();
+                sb.append("[");
+                for (int i = 0; i < 500; i++) {
+                    sb.append(list.get(i)).append(", ");
+                }
+                sb.append("...");
+                int lastIndex = list.size() - 1;
+                for (int i = lastIndex - 4; i < lastIndex; i++) {
+                    sb.append(", ").append(list.get(i));
+                }
+                sb.append(", ").append(list.get(lastIndex)).append("]");
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, sb.toString()));
+            } else {
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
+            }
         }
     }
+
 
     private void evaluatePrintString(PrintStringNode printString) {
         String str = printString.getStringValue();
