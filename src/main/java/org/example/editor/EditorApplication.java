@@ -6,7 +6,9 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -30,7 +32,6 @@ import static org.example.editor.KeywordStyles.KEYWORD_STYLES;
 
 
 public class EditorApplication extends Application {
-    private static final int LOG_DELAY = 250;
     private static final int SYNTAX_DECORATION_DELAY = 50;
     private static final double DIVIDER_POSITION = 0.6;
     private static final int SCENE_WIDTH = 800;
@@ -47,10 +48,37 @@ public class EditorApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(EditorApplication.class.getResource("/org/example/editor/editor-view.fxml"));
         VBox root = fxmlLoader.load();
 
+        VBox topBar = new VBox();
+        topBar.setPadding(new Insets(10, 10, 10, 10));
+        Button runButton = new Button("Run");
+        topBar.getChildren().add(runButton);
+
         StyleClassedTextArea editorTextArea = new StyleClassedTextArea();
         StyleClassedTextArea logTextArea = new StyleClassedTextArea();
         logTextArea.setEditable(false);
         logTextArea.setId("logTextArea");
+
+        runButton.setOnAction(event -> {
+            Task<InterpreterResponse[]> task = new Task<>() {
+                @Override
+                protected InterpreterResponse[] call(){
+                    return get_response(editorTextArea.getText());
+                }
+            };
+            task.setOnSucceeded(
+                    event1 -> {
+                        InterpreterResponse[] response = task.getValue();
+                        Platform.runLater(() -> {
+                            logTextArea.replaceText("");
+                            for (InterpreterResponse resp : response) {
+                                appendResponseToLog(resp, logTextArea);
+                            }
+                        });
+                    });
+            interpreterExecutor.shutdownNow();
+            interpreterExecutor = Executors.newSingleThreadExecutor();
+            interpreterExecutor.submit(task);
+        });
 
         // Set the LineNumberFactory to display line numbers
         editorTextArea.setParagraphGraphicFactory(new CustomLineNumberFactory());
@@ -63,9 +91,9 @@ public class EditorApplication extends Application {
         SplitPane splitPane = createSplitPane(root, editorScrollPan, logScrollPan, DIVIDER_POSITION);
 
         // Add the SplitPane to the VBox
-        root.getChildren().add(0, splitPane);
+        root.getChildren().add(topBar);
+        root.getChildren().add( splitPane);
 
-        PauseTransition pause = new PauseTransition(Duration.millis(LOG_DELAY));
         PauseTransition pauseSyntaxDecoration = new PauseTransition(Duration.millis(SYNTAX_DECORATION_DELAY));
 
         editorTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -78,43 +106,6 @@ public class EditorApplication extends Application {
                 pauseSyntaxDecoration.stop();
             }
             pauseSyntaxDecoration.playFromStart();
-
-        });
-
-        editorTextArea.textProperty().addListener((observable, prefText, currentText) -> {
-            pause.setOnFinished(event -> {
-                Task<InterpreterResponse[]> task = new Task<>() {
-                    @Override
-                    protected InterpreterResponse[] call(){
-                        return get_response(currentText);
-                    }
-                };
-
-                task.setOnSucceeded(event1 -> {
-                    InterpreterResponse[] response = task.getValue();
-
-                    Platform.runLater(() -> {
-                        logTextArea.replaceText("");
-                        for (InterpreterResponse resp : response) {
-                            appendResponseToLog(resp, logTextArea);
-                        }
-                    });
-                });
-
-                // Cancel the previous task if it's still running
-                interpreterExecutor.shutdownNow();
-                // Create a new single-threaded executor
-                interpreterExecutor = Executors.newSingleThreadExecutor();
-                // Execute the new task
-                new Thread(task).start();
-                interpreterExecutor.submit(task);
-            });
-
-            // If the pause is still running, stop it and restart
-            if (pause.getStatus() == Animation.Status.RUNNING) {
-                pause.stop();
-            }
-            pause.playFromStart();
 
         });
 
