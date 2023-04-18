@@ -39,7 +39,9 @@ public class InterpreterService {
             astEvaluator.evaluateProgram(programNode);
 
         } catch (InterpreterException e) {
-            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, e.getMessage()));
+            InterpreterResponse[] interpreterErrorResponseArray = new InterpreterResponse[1];
+            interpreterErrorResponseArray[0] = new InterpreterResponse(ResponseStatus.ERROR, e.getMessage());
+            return interpreterErrorResponseArray;
         }
 
         InterpreterResponse[] interpreterResponsesArray = new InterpreterResponse[interpreterResponses.size()];
