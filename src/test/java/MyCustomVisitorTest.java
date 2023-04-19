@@ -16,9 +16,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
 public class MyCustomVisitorTest {
@@ -127,7 +131,15 @@ public class MyCustomVisitorTest {
         Object value = context.getVariable("seq");
 
         //ASSERT
-        assertEquals(Arrays.asList(0.0, 2.0, 4.0), value);
+        if (value instanceof IntStream) {
+            List<Integer> intStreamList = ((IntStream) value).boxed().collect(Collectors.toList());
+            assertEquals(Arrays.asList(0, 2, 4), intStreamList);
+        } else if (value instanceof Stream) {
+            List<Integer> streamList = ((Stream<?>) value).map(Number.class::cast).map(Number::intValue).collect(Collectors.toList());
+            assertEquals(Arrays.asList(0, 2, 4), streamList);
+        } else {
+            fail("Value should be either an IntStream or a Stream");
+        }
 
     }
 
@@ -173,7 +185,12 @@ public class MyCustomVisitorTest {
         Object value = context.getVariable("range");
 
         //ASSERT
-        assertEquals(Arrays.asList(1, 2, 3, 4), value);
+        if (value instanceof IntStream) {
+            List<Integer> intStreamList = ((IntStream) value).boxed().collect(Collectors.toList());
+            assertEquals(Arrays.asList(1, 2, 3, 4), intStreamList);
+        } else {
+            fail("Value should be an IntStream");
+        }
     }
 
     @Test
@@ -187,7 +204,7 @@ public class MyCustomVisitorTest {
         prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("11" + "\n", interpreterResponses.get(0).message());
+        assertEquals("11", interpreterResponses.get(0).message());
     }
 
     @Test
@@ -220,7 +237,7 @@ public class MyCustomVisitorTest {
         prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("pi = 3.143588659585789\n", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());
+        assertEquals("pi = 3.143588659585789", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());
     }
 
     @ParameterizedTest

@@ -5,10 +5,11 @@ import org.example.editor.InterpreterResponse;
 import org.example.editor.ResponseStatus;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class AstEvaluator {
     private final EvaluationContext context;
@@ -58,22 +59,22 @@ public class AstEvaluator {
         Object value = evaluateExpr(outExpr.getExpression());
 
         if (value != null) {
-            if (value instanceof ArrayList && ((ArrayList<?>) value).size() > 1000) {
-                List<?> list = (ArrayList<?>) value;
-                StringBuilder sb = new StringBuilder();
-                sb.append("[");
-                for (int i = 0; i < 500; i++) {
-                    sb.append(list.get(i)).append(", ");
+            if (value instanceof Stream || value instanceof IntStream) {
+                Stream<?> stream = null;
+                if (value instanceof Stream) {
+                    stream = (Stream<?>) value;
+                } else {
+                    stream = ((IntStream) value).boxed();
                 }
-                sb.append("...");
-                int lastIndex = list.size() - 1;
-                for (int i = lastIndex - 4; i < lastIndex; i++) {
-                    sb.append(", ").append(list.get(i));
-                }
-                sb.append(", ").append(list.get(lastIndex)).append("]").append("\n");
-                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, sb.toString()));
+
+                String streamAsString = stream
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", ", "[", "]"));
+
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, streamAsString));
+
             } else {
-                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value + "\n"));
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
             }
         }
     }
@@ -126,7 +127,7 @@ public class AstEvaluator {
     }
 
 
-    private Object evaluateRangeExpr(RangeExprNode rangeExpr) {
+    private IntStream evaluateRangeExpr(RangeExprNode rangeExpr) {
         Object left = evaluateExpr(rangeExpr.getExpr1());
         Object right = evaluateExpr(rangeExpr.getExpr2());
 
@@ -138,12 +139,7 @@ public class AstEvaluator {
             throw new InterpreterException("Right number must not be less than left number in a range expression.");
         }
 
-        List<Integer> range = new ArrayList<>();
-        for (int i = leftNumber; i <= rightNumber; i++) {
-            range.add(i);
-        }
-
-        return range;
+        return IntStream.rangeClosed(leftNumber, rightNumber);
     }
 
 
@@ -216,21 +212,21 @@ public class AstEvaluator {
      * @param mapExpr The MapExprNode object representing the map expression in the AST.
      * @return An Object representing the result of the map operation applied to the sequence.
      */
-    private Object evaluateMapExpr(MapExprNode mapExpr) {
-        List<Object> sequence = (List<Object>) evaluateExpr(mapExpr.getSequence());
+    private Stream<Object> evaluateMapExpr(MapExprNode mapExpr) {
+        IntStream sequence = (IntStream) evaluateExpr(mapExpr.getSequence());
         context.enterScope();
         String lambdaVarName = mapExpr.getIdentifier();
 
-        Function<Object, Object> lambdaFunction = (input) -> {
+        IntFunction<Object> lambdaFunction = (input) -> {
             context.setVariable(lambdaVarName, input);
             return evaluateExpr(mapExpr.getBody());
         };
 
-        assert sequence != null;
-        List<Object> mappedSequence = sequence.stream().map(lambdaFunction).collect(Collectors.toList());
+        Stream<Object> mappedSequence = sequence.mapToObj(lambdaFunction);
         context.exitScope();
         return mappedSequence;
     }
+
 
     /**
      * Evaluates a ReduceExprNode instance, which represents a 'reduce' expression in the AST.
@@ -242,28 +238,36 @@ public class AstEvaluator {
      * @throws InterpreterException If the reduce function does not receive a sequence as the first argument.
      */
     private Object evaluateReduceExpr(ReduceExprNode reduceExpr) {
-        Object range = evaluateExpr(reduceExpr.getSequence()); // Evaluate the range expression
+        Object range = evaluateExpr(reduceExpr.getSequence());
 
-        if (!(range instanceof List)) {
-            throw new InterpreterException("Reduce function expects a sequence as the first argument.");
+        if (!(range instanceof IntStream) && !(range instanceof Stream)) {
+            throw new InterpreterException("Reduce function expects a sequence of IntStream or Stream<Number> as the first argument.");
         }
-        List<Object> sequence = (List<Object>) range;
 
-        Object initialValue = evaluateExpr(reduceExpr.getNeutralElement());
+        Stream<Number> numberStream;
+        if (range instanceof IntStream sequence) {
+            numberStream = sequence.mapToObj(Integer::valueOf);
+        } else {
+            numberStream = (Stream<Number>) range;
+        }
+
+        Number initialValue = (Number) evaluateExpr(reduceExpr.getNeutralElement());
         context.enterScope();
 
         String lambdaVarName1 = reduceExpr.getIdentifier1();
         String lambdaVarName2 = reduceExpr.getIdentifier2();
 
-        BinaryOperator<Object> lambdaFunction = (input1, input2) -> {
-            context.setVariable(lambdaVarName1, input1);
-            context.setVariable(lambdaVarName2, input2);
-            return evaluateExpr(reduceExpr.getBody());
+        // Use a BinaryOperator<Number> to combine the numbers
+        BinaryOperator<Number> numberCombiner = (number1, number2) -> {
+            context.setVariable(lambdaVarName1, number1);
+            context.setVariable(lambdaVarName2, number2);
+            return (Number) evaluateExpr(reduceExpr.getBody());
         };
 
-        Object reducedValue = sequence.stream().reduce(initialValue, lambdaFunction);
+        Number reducedValue = numberStream.reduce(initialValue, numberCombiner);
         context.exitScope();
         return reducedValue;
     }
+
 
 }
