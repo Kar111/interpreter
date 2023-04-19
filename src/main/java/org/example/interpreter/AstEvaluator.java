@@ -70,10 +70,10 @@ public class AstEvaluator {
                 for (int i = lastIndex - 4; i < lastIndex; i++) {
                     sb.append(", ").append(list.get(i));
                 }
-                sb.append(", ").append(list.get(lastIndex)).append("]");
+                sb.append(", ").append(list.get(lastIndex)).append("]").append("\n");
                 interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, sb.toString()));
             } else {
-                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value.toString()));
+                interpreterResponses.add(new InterpreterResponse(ResponseStatus.SUCCESS, value + "\n"));
             }
         }
     }

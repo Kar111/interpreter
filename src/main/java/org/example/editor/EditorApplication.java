@@ -118,7 +118,7 @@ public class EditorApplication extends Application {
     private void appendResponseToLog(InterpreterResponse response, StyleClassedTextArea logTextArea) {
 
         int start = logTextArea.getLength();
-        logTextArea.appendText(response.message() + "\n");
+        logTextArea.appendText(response.message());
         int end = logTextArea.getLength();
 
         if (response.status() == ResponseStatus.SUCCESS) {
