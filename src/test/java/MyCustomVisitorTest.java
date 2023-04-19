@@ -187,7 +187,7 @@ public class MyCustomVisitorTest {
         prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("11", interpreterResponses.get(0).message());
+        assertEquals("11" + "\n", interpreterResponses.get(0).message());
     }
 
     @Test
@@ -220,7 +220,7 @@ public class MyCustomVisitorTest {
         prepareTest(input, interpreterResponses);
 
         //ASSERT
-        assertEquals("pi = 3.143588659585789", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());
+        assertEquals("pi = 3.143588659585789\n", interpreterResponses.get(0).message() + interpreterResponses.get(1).message());
     }
 
     @ParameterizedTest

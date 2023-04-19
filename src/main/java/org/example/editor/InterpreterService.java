@@ -37,7 +37,8 @@ public class InterpreterService {
             interpreterErrorResponseArray[0] = new InterpreterResponse(ResponseStatus.ERROR, e.getMessage());
             return interpreterErrorResponseArray;
         }
-         try {MyCustomVisitor visitor = new MyCustomVisitor();
+        try {
+            MyCustomVisitor visitor = new MyCustomVisitor();
             ProgramNode programNode = (ProgramNode) visitor.visit(tree);
 
             // Evaluate the AST
@@ -45,7 +46,7 @@ public class InterpreterService {
             astEvaluator.evaluateProgram(programNode);
 
         } catch (InterpreterException e) {
-             interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, e.getMessage()));
+            interpreterResponses.add(new InterpreterResponse(ResponseStatus.ERROR, e.getMessage()));
         }
 
         InterpreterResponse[] interpreterResponsesArray = new InterpreterResponse[interpreterResponses.size()];
